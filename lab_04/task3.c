@@ -104,11 +104,11 @@ int main()
     int status;
 
     child_pid = wait(&status);
-    // printf("Process status: %d, child pid = %d\n", status, child_pid);
+    printf("Process status: %d, child pid = %d\n", status, child_pid);
     check_status(status);
 
     child_pid = wait(&status);
-    // printf("Process status: %d, child pid = %d\n", status, child_pid);
+    printf("Process status: %d, child pid = %d\n", status, child_pid);
     check_status(status);
 
     printf("\nParent: pid = %d, pgrp = %d\nChild1 = %d, Child2 = %d\n", getpid(), getpgrp(), child1, child2);

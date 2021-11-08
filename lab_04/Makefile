@@ -1,17 +1,20 @@
+FLAGS = -Wall -o
+
+
 1: 
-	gcc task1.c -o fork.exe && ./fork.exe
+	gcc task1.c $(FLAGS) fork.exe && ./fork.exe
 
 2: 
-	gcc task2.c -o wait.exe && ./wait.exe 
+	gcc task2.c $(FLAGS) wait.exe && ./wait.exe 
 
 3: 
-	gcc task3.c -o exec.exe && ./exec.exe
+	gcc task3.c $(FLAGS) exec.exe && ./exec.exe
 
 4: 
-	gcc task3.c -o pipe.exe  && ./pipe.exe
+	gcc task4.c $(FLAGS) pipe.exe  && ./pipe.exe
 
 5: 
-	gcc task3.c -o pipe.exe && ./pipe.exe
+	gcc task5.c $(FLAGS) pipe.exe && ./pipe.exe
 
 
 clean:

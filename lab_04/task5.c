@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -15,11 +16,15 @@
 #define ERR_FORK -1
 #define ERR_PIPE -1
 
-#define TIME_FOR_SLEEP 3
+#define TIME_FOR_SLEEP 15
 
 #define TASK_TEXT "\n=======================\
-                   \n     Task 4: pipe()    \
+                   \n     Task 5: signal()    \
                    \n=======================\n\n"
+
+
+#define SIGNAL_TEXT "Зажмите: СTRL+\\ - вызвать сообщение от потомка 1 \
+                            \nCtrl+C - вызвать сообщение от потомка 2\n\n"
 
 
 #define TEXT_CHILD_1 "Child 1 is texting  message\n"
@@ -28,6 +33,11 @@
 
 #define READ 0
 #define WRITE 1
+
+#define CTRL_SLASH 1
+#define CTRL_C 0
+#define NOTHING 2
+int flag = NOTHING;
 
 
 
@@ -59,11 +69,33 @@ void check_status(int status)
 }
 
 
+
+void catch_ctrlc(int signal)
+{
+    flag = CTRL_C;
+
+    printf("\nПойманный сигнал = %d\n", signal);
+}
+
+
+void catch_ctrlslash(int signal)
+{
+    flag = CTRL_SLASH;
+
+    printf("\nПойманный сигнал = %d\n", signal);
+}
+
+
+
 int main()
 {
     printf(TASK_TEXT);
 
-    int fd[2];  // 0 - чтение, 1 - запись
+    // Перехват сигналов
+    signal(SIGINT, catch_ctrlc);
+    signal(SIGQUIT, catch_ctrlslash);
+
+    int fd[2]; // 0 - чтение, 1 - запись
 
     if (pipe(fd) == ERR_PIPE)
     {
@@ -118,10 +150,25 @@ int main()
         read(fd[READ], text1, TEXT_BUF);
         read(fd[READ], text2, TEXT_BUF);
 
-        printf("Result: %s", text1);
-        printf("Result: %s\n\n", text2);
+        // Использование сигналов
+        printf(SIGNAL_TEXT);
 
-        child_pid = wait(&status);
+        sleep(TIME_FOR_SLEEP);
+
+        if (flag == CTRL_SLASH)
+        {
+            printf("Результат: %s\n\n", text1);
+        }
+        else if (flag == CTRL_C)
+        {
+            printf("Результат: %s\n\n", text2);
+        }
+        else
+        {
+            printf("\nНичего не выбрано\n\n");
+        }
+
+        child_pid = wait(&status); // надо ли?
         check_status(status);
 
         child_pid = wait(&status);
