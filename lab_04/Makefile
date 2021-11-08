@@ -18,4 +18,4 @@ FLAGS = -Wall -o
 
 
 clean:
-	rm *.o *.exe
+	rm *.exe

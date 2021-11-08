@@ -89,7 +89,7 @@ int main()
     {
         printf("\nChild 2: pid = %d, ppid = %d, pgrp = %d\n\n", getpid(), getppid(), getpgrp());
 
-        if (execlp("echo", "echo", "\nHello", "from", "child_2\n", NULL) == ERR_EXEC)
+        if (execlp("cat", "cat", "text_child2.txt", NULL) == ERR_EXEC)
         {
             printf("\nError: Child 2 can not execute exec()\n");
 
@@ -104,7 +104,7 @@ int main()
     int status;
 
     child_pid = wait(&status);
-    printf("Process status: %d, child pid = %d\n", status, child_pid);
+    printf("\n\nProcess status: %d, child pid = %d\n", status, child_pid);
     check_status(status);
 
     child_pid = wait(&status);
