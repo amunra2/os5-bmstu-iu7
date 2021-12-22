@@ -101,7 +101,7 @@ void StartWrite()
 	// ждущих писателей++
 	InterlockedIncrement(&waiting_writers_count);
 
-	if (is_writer_active  || active_readers_count > 0)
+	if (is_writer_active || active_readers_count > 0)
 	{
 		WaitForSingleObject(can_write, INFINITE);
 	}

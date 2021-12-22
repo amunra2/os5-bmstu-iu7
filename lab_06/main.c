@@ -14,15 +14,15 @@ HANDLE can_read;
 HANDLE can_write;
 HANDLE mutex;
 
+HANDLE readers_threads[READERS_NUM];
+HANDLE writers_threads[WRITERS_NUM];
+
 
 int writers_wait_cnt = 0;
 int readers_wait_cnt = 0;
 int readers_active_cnt = 0;
 
 bool is_writer_active = false;
-
-HANDLE readers_threads[READERS_NUM];
-HANDLE writers_threads[WRITERS_NUM];
 
 int readers_id[READERS_NUM];
 int writers_id[WRITERS_NUM];
@@ -32,7 +32,7 @@ int value = 0;
 
 void start_read()
 {
-    InterlockedIncrement(&writers_wait_cnt);
+    InterlockedIncrement(&readers_wait_cnt);
 
     if (is_writer_active || WaitForSingleObject(can_write, 0) == WAIT_OBJECT_0)
     {
@@ -66,12 +66,12 @@ DWORD WINAPI run_reader(const LPVOID parametr)
 
     for (int i = 0; i < ITERS; i++)
     {
-        int sleep_time = rand() % 200 + 100;
+        int sleep_time = rand() % 3000 + 1000;
         Sleep(sleep_time);
 
         start_read();
 
-        printf(">>>>> Reader: id = %2d, value = %2d, sleep = %3d ms\n", id, value, sleep_time);
+        printf("\x1b[31m>>>>> Reader: id = %2d, value = %2d, \x1b[0msleep = %3d ms\n", id, value, sleep_time);
 
         stop_read();
     }
@@ -80,20 +80,17 @@ DWORD WINAPI run_reader(const LPVOID parametr)
 
 void start_write()
 {
-    InterlockedIncrement(&readers_wait_cnt);
+    InterlockedIncrement(&writers_wait_cnt);
 
     if (is_writer_active || readers_active_cnt > 0)
     {
-        WaitForSingleObject(can_read, INFINITE);
+        WaitForSingleObject(can_write, INFINITE);
     }
-
-    WaitForSingleObject(mutex, INFINITE);
 
     InterlockedDecrement(&writers_wait_cnt);
 
     is_writer_active = true;
-
-    SetEvent(can_write);
+    ResetEvent(can_write);
 }
 
 
@@ -118,13 +115,13 @@ DWORD WINAPI run_writer(const LPVOID parametr)
 
     for (int i = 0; i < ITERS; i++)
     {
-        int sleep_time = rand() % 400 + 100;
+        int sleep_time = rand() % 4000 + 1000;
         Sleep(sleep_time);
 
         start_write();
 
         value++;
-        printf("<<<<< Writer: id = %2d, value = %2d, sleep = %3d ms\n", id, value, sleep_time);
+        printf("\x1b[32m<<<<< Writer: id = %2d, value = %2d, \x1b[0msleep = %3d ms\n", id, value, sleep_time);
 
         stop_write();
     }
@@ -133,19 +130,6 @@ DWORD WINAPI run_writer(const LPVOID parametr)
 
 int create_threads()
 {
-    // Writers
-    for (int i = 0; i < WRITERS_NUM; i++)
-    {
-        writers_id[i] = i;
-        writers_threads[i] = CreateThread(NULL, 0, run_writer, writers_id + i, 0, NULL);
-
-        if (writers_threads[i] == NULL)
-        {
-            perror("\nError: Create thread - writer\n");
-            return -1;
-        }
-    }
-
     // Readers
     for (int i = 0; i < READERS_NUM; i++)
     {
@@ -155,6 +139,20 @@ int create_threads()
         if (readers_threads[i] == NULL)
         {
             perror("\nError: Create thread - reader\n");
+            return -1;
+        }
+    }
+
+
+    // Writers
+    for (int i = 0; i < WRITERS_NUM; i++)
+    {
+        writers_id[i] = i;
+        writers_threads[i] = CreateThread(NULL, 0, run_writer,  writers_id + i, 0, NULL);
+
+        if (writers_threads[i] == NULL)
+        {
+            perror("\nError: Create thread - writer\n");
             return -1;
         }
     }
