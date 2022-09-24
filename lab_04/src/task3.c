@@ -1,4 +1,4 @@
-// Вызов wait()
+// Вызов exec()
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,17 +7,12 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-#define OK 0
-
-#define ERROR -1
-#define ERR_FORK -1
 
 #define TIME_FOR_SLEEP 3
 
-
 #define TASK_TEXT "\n=======================\
-                   \n     Task 2: wait()    \
-                   \n=======================\n\n"
+                    \n     Task 3: exec()    \
+                    \n=======================\n\n"
 
 
 void check_status(int status)
@@ -53,44 +48,45 @@ int main()
     printf(TASK_TEXT);
 
     int child1, child2;
-
-    // Порождение процесса-потомка через fork()
-    if ((child1 = fork()) == ERR_FORK)
-    {
-        perror("Can not fork\n");
-        return ERROR;
-    }
-    else if (child1 == OK)
-    {
-        sleep(TIME_FOR_SLEEP);
-
-        printf("\nChild 1: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
-
-        exit(OK);
-    }
-
-
-    // Порождение процесса-потомка через fork()
-    if ((child2 = fork()) == ERR_FORK)
-    {
-        perror("Can not fork\n");
-        return ERROR;
-    }
-    else if (child2 == OK)
-    {
-        sleep(TIME_FOR_SLEEP);
-
-        printf("\nChild 2: pid = %d, ppid = %d, pgrp = %d\n\n", getpid(), getppid(), getpgrp());
-
-        exit(OK);
-    }
-
-    // wait() - блокирует родительский процесс до момента завершения дочернего
     pid_t child_pid;
     int status;
 
+    if ((child1 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }   
+    else if (child1 == 0)
+    {
+        if (execlp("./tads_graph/tads_graph.exe", "./tads_graph.exe", NULL) == -1)
+        {
+            printf("\nError: Child 1 can not execute exec()\n");
+
+            exit(0);
+        }
+
+        exit(0);
+    }
+
+    if ((child2 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child2 == 0)
+    {
+        if (execlp("./qsort/qsort.exe", "./qsort.exe", NULL) == -1)
+        {
+            printf("\nError: Child 2 can not execute exec()\n");
+
+            exit(0);
+        }
+
+        exit(0);
+    }
+
     child_pid = wait(&status);
-    printf("Process status: %d, child pid = %d\n", status, child_pid);
+    printf("\n\nProcess status: %d, child pid = %d\n", status, child_pid);
     check_status(status);
 
     child_pid = wait(&status);
@@ -99,5 +95,5 @@ int main()
 
     printf("\nParent: pid = %d, pgrp = %d\nChild1 = %d, Child2 = %d\n", getpid(), getpgrp(), child1, child2);
 
-    return OK;
+    return 0;
 }

@@ -1,4 +1,4 @@
-FLAGS = -Wall -o
+FLAGS = -o
 
 
 1: 
@@ -14,7 +14,7 @@ FLAGS = -Wall -o
 	gcc task4.c $(FLAGS) pipe.exe  && ./pipe.exe
 
 5: 
-	gcc task5.c $(FLAGS) pipe.exe && ./pipe.exe
+	gcc task5.c $(FLAGS) signal.exe && ./signal.exe
 
 
 clean:

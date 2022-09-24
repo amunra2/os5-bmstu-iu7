@@ -1,0 +1,576 @@
+\setcounter{page}{2}
+
+\section*{Программы лабораторной работы}
+
+\subsection*{Задача 1} 
+В программе создаются два процесса потомка. В них вызывается sleep(), чтобы дочерние процессы завершились после завершения процесса-предка. При этом данные процессы станут сиротами.
+
+
+\begin{lstlisting}[style={asm},label=lst:fork,caption=Вызов fork()]
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
+#define TIME_FOR_SLEEP 3
+
+#define TASK_TEXT "\n=======================\
+                    \n     Task 1: fork()    \
+                    \n=======================\n\n"
+
+
+int main()
+{
+    printf(TASK_TEXT);
+    
+    int child1, child2;
+
+    // Порождение процесса-потомка через fork()
+    if ((child1 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child1 == 0)
+    {   
+        printf("\nBefore sleep: Child 1: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
+
+        sleep(TIME_FOR_SLEEP);
+
+        printf("\nAfter sleep: Child 1: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
+
+        exit(0);
+    }
+
+
+    if ((child2 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child2 == 0)
+    {
+        printf("\nBefore sleep: Child 2: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
+
+        sleep(TIME_FOR_SLEEP);
+
+        printf("\nAfter sleep: Child 2: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
+
+        exit(0);
+    }
+
+
+    printf("\n\nParent: pid = %d, pgrp = %d\n", getpid(), getpgrp());
+
+    return 0;
+}
+\end{lstlisting}
+
+\img{75mm}{dem1}{Демонстрация работы программы}
+\img{10mm}{adopted}{Процесс, который усыновил процессы-сироты}
+
+\clearpage
+
+\subsection*{Задача 2} 
+Вызов wait() - блокирует родительский процесс (то есть родительскому процессу не выделяется процессорное время) до момента завершения дочернего процесса.
+
+На экран выводятся соответсвующие сообщения.
+
+\begin{lstlisting}[style={asm},label=lst:wait,caption=Вызов wait()]
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <sys/wait.h>
+#include <sys/types.h>
+
+#define TIME_FOR_SLEEP 3
+
+
+#define TASK_TEXT "\n=======================\
+                    \n     Task 2: wait()    \
+                    \n=======================\n\n"
+
+
+void check_status(int status)
+{
+    if (WIFEXITED(status))
+    {
+        printf("Дочерний процесс завершен корректно\n");
+        printf("Дочерний процесс завершился с кодом: \t%d\n\n", WEXITSTATUS(status));
+
+        return;
+    }
+
+    if (WIFSIGNALED(status))
+    {
+        printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+        printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+
+        return;
+    }
+
+    if (WIFSTOPPED(status))
+    {
+        printf("Дочерний процесс остановлен\n");
+        printf("Номер сигнала: \t%d\n\n", WSTOPSIG(status));
+
+        return;
+    }
+}
+
+
+int main()
+{
+    printf(TASK_TEXT);
+
+    int child1, child2;
+    pid_t child_pid;
+    int status;
+
+    if ((child1 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child1 == 0)
+    {
+        sleep(TIME_FOR_SLEEP);
+
+        printf("\nChild 1: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
+
+        exit(0);
+    }
+
+    if ((child2 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child2 == 0)
+    {
+        sleep(TIME_FOR_SLEEP);
+
+        printf("\nChild 2: pid = %d, ppid = %d, pgrp = %d\n\n", getpid(), getppid(), getpgrp());
+
+        exit(0);
+    }
+
+    child_pid = wait(&status);
+    printf("Process status: %d, child pid = %d\n", status, child_pid);
+    check_status(status);
+
+    child_pid = wait(&status);
+    printf("Process status: %d, child pid = %d\n", status, child_pid);
+    check_status(status);
+
+    printf("\nParent: pid = %d, pgrp = %d\nChild1 = %d, Child2 = %d\n", getpid(), getpgrp(), child1, child2);
+
+    return 0;
+}
+\end{lstlisting}
+
+\img{75mm}{dem2}{Демонстрация работы программы}
+
+\clearpage
+
+\subsection*{Задача 3} 
+Процессы-потомки переходят на выполнение других программ: первый процесс-потомок выполняет программу, которая производит некоторую работу с графом (лабораторная работа по Типам и Структурам данных), а второй процесс-потомок выполняет программу, сортирующую массив целых чисел методом быстрой сортировки (QuickSort).
+
+На экран выводятся соответсвующие сообщения.
+
+\begin{lstlisting}[style={asm},label=lst:execlp,caption=Вызов execlp()]
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <sys/wait.h>
+#include <sys/types.h>
+
+
+#define TIME_FOR_SLEEP 3
+
+#define TASK_TEXT "\n=======================\
+                    \n     Task 3: exec()    \
+                    \n=======================\n\n"
+
+
+void check_status(int status)
+{
+    if (WIFEXITED(status))
+    {
+        printf("Дочерний процесс завершен корректно\n");
+        printf("Дочерний процесс завершился с кодом: \t%d\n\n", WEXITSTATUS(status));
+
+        return;
+    }
+
+    if (WIFSIGNALED(status))
+    {
+        printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+        printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+
+        return;
+    }
+
+    if (WIFSTOPPED(status))
+    {
+        printf("Дочерний процесс остановлен\n");
+        printf("Номер сигнала: \t%d\n\n", WSTOPSIG(status));
+
+        return;
+    }
+}
+
+
+int main()
+{
+    printf(TASK_TEXT);
+
+    int child1, child2;
+    pid_t child_pid;
+    int status;
+
+    if ((child1 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child1 == 0)
+    {
+        if (execlp("./tads_graph/tads_graph.exe", "./tads_graph.exe", "./tads_graph/input.txt", NULL) == -1)
+        {
+            printf("\nError: Child 1 can not execute exec()\n");
+
+            exit(0);
+        }
+
+        exit(0);
+    }
+
+    if ((child2 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child2 == 0)
+    {
+        if (execlp("./qsort/qsort.exe", "./qsort.exe", "./qsort/input.txt", NULL) == -1)
+        {
+            printf("\nError: Child 2 can not execute exec()\n");
+
+            exit(0);
+        }
+
+        exit(0);
+    }
+
+    child_pid = wait(&status);
+    printf("\n\nProcess status: %d, child pid = %d\n", status, child_pid);
+    check_status(status);
+
+    child_pid = wait(&status);
+    printf("Process status: %d, child pid = %d\n", status, child_pid);
+    check_status(status);
+
+    printf("\nParent: pid = %d, pgrp = %d\nChild1 = %d, Child2 = %d\n", getpid(), getpgrp(), child1, child2);
+
+    return 0;
+}
+\end{lstlisting}   
+
+\img{140mm}{dem3}{Демонстрация работы программы}
+
+\clearpage
+
+
+\subsection*{Задача 4} 
+Процессы-потомки и процесс-предок обмениваются сообщениями через неименованный программный канал. 
+На экран выводятся соответсвующие сообщения.
+
+\begin{lstlisting}[style={asm},label=lst:pipe,caption=Использование pipe()]
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <sys/wait.h>
+#include <sys/types.h>
+
+#include <string.h>
+
+#define TIME_FOR_SLEEP 3
+
+#define TASK_TEXT "\n=======================\
+                    \n     Task 4: pipe()    \
+                    \n=======================\n\n"
+
+
+#define TEXT_CHILD_1 "Everybody wants to belive in miracles\n"
+#define TEXT_CHILD_2 "Testing message\n"
+#define TEXT_BUF 55
+
+
+
+void check_status(int status)
+{
+    if (WIFEXITED(status))
+    {
+        printf("Дочерний процесс завершен корректно\n");
+        printf("Дочерний процесс завершился с кодом: \t%d\n\n", WEXITSTATUS(status));
+
+        return;
+    }
+
+    if (WIFSIGNALED(status))
+    {
+        printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+        printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+
+        return;
+    }
+
+    if (WIFSTOPPED(status))
+    {
+        printf("Дочерний процесс остановлен\n");
+        printf("Номер сигнала: \t%d\n\n", WSTOPSIG(status));
+
+        return;
+    }
+}
+
+
+int main()
+{
+    printf(TASK_TEXT);
+
+    int child1, child2;
+
+    int fd[2];
+    pid_t child_pid;
+    int status;
+
+    if (pipe(fd) == -1)
+    {
+        perror("Can not pipe\n");
+        return -1;
+    }
+
+    if ((child1 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child1 == 0)
+    {
+        close(fd[0]);
+        write(fd[1], TEXT_CHILD_1, strlen(TEXT_CHILD_1) + 1);
+        exit(0);
+    }
+
+    if ((child2 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child2 == 0)
+    {
+        close(fd[0]);
+        write(fd[1], TEXT_CHILD_2, strlen(TEXT_CHILD_2) + 1);
+        exit(0);
+    }
+
+
+    if (child1 && child2)
+    {
+        char text1[TEXT_BUF];
+        char text2[TEXT_BUF];
+
+        close(fd[1]);
+
+        read(fd[0], text1, strlen(TEXT_CHILD_1) + 1);
+        read(fd[0], text2, strlen(TEXT_CHILD_2) + 1);
+
+        printf("Result: %s", text1);
+        printf("Result: %s\n\n", text2);
+
+        child_pid = wait(&status);
+        check_status(status);
+
+        child_pid = wait(&status);
+        check_status(status);
+    }
+
+    return 0;
+}
+\end{lstlisting} 
+
+\img{75mm}{dem4}{Демонстрация работы программы}
+
+
+\clearpage
+
+\subsection*{Задача 5} 
+Процессы-потомки и процесс-предок обмениваются сообщениями через неименованный программный канал. Используя сигналы, меняем ход выполнения программы.
+
+На экран выводятся соответсвующие сообщения.
+
+\begin{lstlisting}[style={asm},label=lst:signal,caption=Использование signal()]
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+#include <sys/wait.h>
+#include <sys/types.h>
+
+#include <string.h>
+
+
+#define TIME_FOR_SLEEP 5
+
+#define TASK_TEXT "\n=======================\
+                    \n     Task 5: signal()    \
+                    \n=======================\n\n"
+
+
+#define SIGNAL_TEXT "Зажмите: СTRL+\\ - вывести сообщения от потомков\n\n"
+
+
+#define TEXT_CHILD_1 "Everybody wants to belive in miracles\n"
+#define TEXT_CHILD_2 "Testing message\n"
+#define TEXT_BUF 55
+flag = 0
+
+
+
+void check_status(int status)
+{
+    if (WIFEXITED(status))
+    {
+        printf("Дочерний процесс завершен корректно\n");
+        printf("Дочерний процесс завершился с кодом: \t%d\n\n", WEXITSTATUS(status));
+
+        return;
+    }
+
+    if (WIFSIGNALED(status))
+    {
+        printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+        printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+
+        return;
+    }
+
+    if (WIFSTOPPED(status))
+    {
+        printf("Дочерний процесс остановлен\n");
+        printf("Номер сигнала: \t%d\n\n", WSTOPSIG(status));
+
+        return;
+    }
+}
+
+
+void catch_ctrlslash(int signal)
+{
+    flag = 1;
+
+    printf("\nПойманный сигнал = %d\n", signal);
+}
+
+int main()
+{
+    printf(TASK_TEXT);
+
+    char text1[TEXT_BUF] = "\0";
+    char text2[TEXT_BUF] = "\0";
+
+    pid_t child_pid;
+    int status;
+
+    int child1, child2;
+    int fd[2];
+
+    signal(SIGQUIT, catch_ctrlslash);
+
+    printf(SIGNAL_TEXT);
+
+    sleep(TIME_FOR_SLEEP);
+
+    if (pipe(fd) == -1)
+    {
+        perror("Can not pipe\n");
+        return -1;
+    }
+
+    if ((child1 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child1 == 0)
+    {
+        if (flag == 1)
+        {
+            close(fd[0]);
+            write(fd[1], TEXT_CHILD_1, strlen(TEXT_CHILD_1) + 1);
+        }
+
+        exit(0);
+    }
+
+    if ((child2 = fork()) == -1)
+    {
+        perror("Can not fork\n");
+        return -1;
+    }
+    else if (child2 == 0)
+    {
+        if (flag == 1)
+        {
+            close(fd[0]);
+            write(fd[1], TEXT_CHILD_2, strlen(TEXT_CHILD_2) + 1);
+        }
+
+        exit(0);
+    }
+
+    if (child1 && child2)
+    {
+        close(fd[1]);
+        
+        read(fd[0], text1, strlen(TEXT_CHILD_1) + 1);
+        read(fd[0], text2, strlen(TEXT_CHILD_2) + 1);
+
+        printf("\nResult: %s\n", text1);
+        printf("Result: %s\n\n", text2);
+
+        child_pid = wait(&status);
+        check_status(status);
+
+        child_pid = wait(&status);
+        check_status(status);
+    }
+
+    return 0;
+}
+
+
+\end{lstlisting} 
+
+
+\img{75mm}{dem5_signal}{Демонстрация работы программы - вызван сигнал}
+
+\img{75mm}{dem5_nosignal}{Демонстрация работы программы - сигнал не вызван}
+
+
+\clearpage
+\section*{Последовательность действий при вызове fork() и exec()}
+
+\img{180mm}{fork1}{Вызов fork - 1}
+\img{180mm}{fork2}{Вызов fork - 2}
+
+\img{180mm}{exec1}{Вызов exec - 1}
+\img{180mm}{exec2}{Вызов exec - 2}
+\img{180mm}{exec3}{Вызов exec - 3}

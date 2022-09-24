@@ -9,25 +9,16 @@
 
 #include <string.h>
 
-#define OK 0
-
-#define ERROR -1
-#define ERR_FORK -1
-#define ERR_PIPE -1
-
 #define TIME_FOR_SLEEP 3
 
 #define TASK_TEXT "\n=======================\
-                   \n     Task 4: pipe()    \
-                   \n=======================\n\n"
+                    \n     Task 4: pipe()    \
+                    \n=======================\n\n"
 
 
-#define TEXT_CHILD_1 "Child 1 is texting  message\n"
-#define TEXT_CHILD_2 "Child 2 is printing message\n"
+#define TEXT_CHILD_1 "Everybody wants to belive in miracles\n"
+#define TEXT_CHILD_2 "Testing message\n"
 #define TEXT_BUF 55
-
-#define READ 0
-#define WRITE 1
 
 
 
@@ -63,45 +54,40 @@ int main()
 {
     printf(TASK_TEXT);
 
-    int fd[2];  // 0 - чтение, 1 - запись
-
-    if (pipe(fd) == ERR_PIPE)
-    {
-        perror("Can not pipe\n");
-        return ERROR;
-    }
-
     int child1, child2;
 
-    // Порождение процесса-потомка через fork()
-    if ((child1 = fork()) == ERR_FORK)
+    int fd[2];
+    pid_t child_pid;
+    int status;
+
+    if (pipe(fd) == -1)
+    {
+        perror("Can not pipe\n");
+        return -1;
+    }
+
+    if ((child1 = fork()) == -1)
     {
         perror("Can not fork\n");
-        return ERROR;
+        return -1;
     }
-    else if (child1 == OK)
+    else if (child1 == 0)
     {
-        // printf("\nChild 1: pid = %d, ppid = %d, pgrp = %d\n", getpid(), getppid(), getpgrp());
-
-        close(fd[READ]);
-        write(fd[WRITE], TEXT_CHILD_1, strlen(TEXT_CHILD_1) + 1);
-        exit(OK);
+        close(fd[0]);
+        write(fd[1], TEXT_CHILD_1, strlen(TEXT_CHILD_1) + 1);
+        exit(0);
     }
 
-
-    // Порождение процесса-потомка через fork()
-    if ((child2 = fork()) == ERR_FORK)
+    if ((child2 = fork()) == -1)
     {
         perror("Can not fork\n");
-        return ERROR;
+        return -1;
     }
-    else if (child2 == OK)
+    else if (child2 == 0)
     {
-        // printf("\nChild 2: pid = %d, ppid = %d, pgrp = %d\n\n", getpid(), getppid(), getpgrp());
-
-        close(fd[READ]);
-        write(fd[WRITE], TEXT_CHILD_2, strlen(TEXT_CHILD_1) + 1);
-        exit(OK);
+        close(fd[0]);
+        write(fd[1], TEXT_CHILD_2, strlen(TEXT_CHILD_2) + 1);
+        exit(0);
     }
 
 
@@ -110,13 +96,10 @@ int main()
         char text1[TEXT_BUF];
         char text2[TEXT_BUF];
 
-        pid_t child_pid;
-        int status;
+        close(fd[1]);
 
-        close(fd[WRITE]);
-
-        read(fd[READ], text1, TEXT_BUF);
-        read(fd[READ], text2, TEXT_BUF);
+        read(fd[0], text1, strlen(TEXT_CHILD_1) + 1);
+        read(fd[0], text2, strlen(TEXT_CHILD_2) + 1);
 
         printf("Result: %s", text1);
         printf("Result: %s\n\n", text2);
@@ -128,5 +111,5 @@ int main()
         check_status(status);
     }
 
-    return OK;
+    return 0;
 }

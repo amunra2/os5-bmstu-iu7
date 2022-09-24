@@ -1,0 +1,7 @@
+graph in {    
+node [shape = circle];
+
+1 -- 2 [ label = 3, color = blue];
+1 -- 3 [ label = 3, color = blue];
+2 -- 3 [ label = 2, color = blue];
+}
