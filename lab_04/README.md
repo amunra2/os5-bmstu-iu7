@@ -48,4 +48,6 @@ main 1
 
 [Код](./src)
 
+[Вахалия Ю. <<Unix изнутри>>](./materials/Vakhalia_Yu_Unix_iznutri_2003.pdf)
+
 _@amunra2 (2021г.)_
