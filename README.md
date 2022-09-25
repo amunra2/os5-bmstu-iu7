@@ -4,7 +4,7 @@
 
  ## Лабораторные работы
 
- ### Assembler
+ ### DOS/Windows
 
  [ЛР1: 1) Прерывание INT 8h; 2) Системный таймер](./lab_01/)
 
@@ -36,6 +36,6 @@
 
  [Justarone](https://github.com/Justarone/bmstu-os/tree/master/sem_01)
 
- [mrrvz](https://github.com/mRrvz/bmstu-os/tree/master/sem_01)
+ [mRrvz](https://github.com/mRrvz/bmstu-os/tree/master/sem_01)
 
 _@amunra2 (2021г.)_
