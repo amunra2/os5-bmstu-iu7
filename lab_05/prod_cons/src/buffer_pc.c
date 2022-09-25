@@ -1,6 +1,9 @@
 #include "buffer_pc.h"
 
 
+// буфер не обязательно должен быть кольцевым, а лучше, чтобы не был кольцевым
+
+
 int init_buf(buf_t *const buffer)
 {
     if (!buffer)

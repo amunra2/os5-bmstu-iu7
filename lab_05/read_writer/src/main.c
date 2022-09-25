@@ -53,7 +53,7 @@ int main(void)
         perror("\n\nОшибка: не установлен семафор\n\n");
         return -5;
     }
-    if (semctl(sem_descr, WRITER_ACT, SETVAL, 0) == -1)
+    if (semctl(sem_descr, WRITER_ACT, SETVAL, 0) == -1) // 0 - для чит-пис, 1 - для тестового  варианта
     {
         perror("\n\nОшибка: не уставновлен семафор\n\n");
         return -6;

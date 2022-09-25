@@ -13,7 +13,7 @@ struct sembuf reader_begin[5] =
 struct sembuf reader_release[] = {{READER_ACT, -1, 0}};
 
 
-struct sembuf writer_begin[5] = 
+struct sembuf writer_begin[] = // полностью рабочий алгоритм читателей-писателей
 {
     {WRITE_QUEUE, 1, 0},
     {READER_ACT, 0, 0},
@@ -22,7 +22,15 @@ struct sembuf writer_begin[5] =
     {WRITE_QUEUE, -1, 0}
 };
 
-struct sembuf writer_release[] = {{WRITER_ACT, -1, 0}};
+
+// struct sembuf writer_begin[1] = // возможный вариант реализации нужной идеи
+// {
+//     {WRITER_ACT, -1, 0}
+// };
+
+
+struct sembuf writer_release[] = {{WRITER_ACT, -1, 0}}; // полностью рабочий алгоритм читателей-писателей
+// struct sembuf writer_release[] = {{WRITER_ACT, 1, 0}}; // возможный вариант реализации нужной идеи
 
 
 int run_reader(int *const counter, const int sid, const int reader_id)
@@ -37,7 +45,7 @@ int run_reader(int *const counter, const int sid, const int reader_id)
     int sleep_time;
     int elem;
 
-    for (int i = 0; i < ITERS; i++)
+    for (int i = 0; i < ITERS; i++) // стот while(1) и обработку сигнала для выхода
     {
         sleep_time = rand() % 4 + 1;
         sleep(sleep_time);
@@ -79,12 +87,12 @@ int run_writer(int *const counter, const int sid, const int writer_id)
     int sleep_time;
     char elem;
 
-    for (int i = 0; i < ITERS; i++)
+    for (int i = 0; i < ITERS; i++) // стот while(1) и обработку сигнала для выхода
     {
         sleep_time = rand() % 3 + 1;
         sleep(sleep_time);
 
-        if (semop(sid, writer_begin, 5) == -1)
+        if (semop(sid, writer_begin, 5) == -1) // 5 - для чит-пис, 1 - для тестового варианта
         {
             perror("\n\nОшибка: Писатель не может изменить значение семафора\n\n");
             exit(-3);

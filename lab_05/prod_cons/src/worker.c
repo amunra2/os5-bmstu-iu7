@@ -2,10 +2,10 @@
 
 
 struct sembuf producer_lock[2] = {{EMPTY_BUF, -1, 0}, {BINARY_SEM, -1, 0}};
-struct sembuf producer_release[2] = {{FULL_BUF, 1, 0}, {BINARY_SEM, 1, 0}};
+struct sembuf producer_release[2] = {{BINARY_SEM, 1, 0}, {FULL_BUF, 1, 0}};
 
 struct sembuf consumer_lock[2] = {{FULL_BUF, -1, 0}, {BINARY_SEM, -1, 0}};
-struct sembuf consumer_release[2] = {{EMPTY_BUF, 1, 0}, {BINARY_SEM, 1, 0}};
+struct sembuf consumer_release[2] = {{BINARY_SEM, 1, 0}, {EMPTY_BUF, 1, 0}};
 
 
 

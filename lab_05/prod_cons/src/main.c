@@ -27,7 +27,7 @@ int main(void)
     {
         perror("\n\nОшибка: Не удалось создать новый разделяемый сегмент\n\n");
 
-        return -1; // define?
+        return -1;
     }
 
     buf_t *buffer;
@@ -61,12 +61,12 @@ int main(void)
     }
     if (semctl(sem_descr, EMPTY_BUF, SETVAL, N) == -1)
     {
-        perror("\n\nОшибка: не уставновлен считающий буфер - БуферПуст\n\n");
+        perror("\n\nОшибка: не уставновлен считающий семафор - БуферПуст\n\n");
         return -6;
     }
     if (semctl(sem_descr, FULL_BUF, SETVAL, 0) == -1)
     {
-        perror("\n\nОшибка: не уставновлен считающий буфер - БуферПолон\n\n");
+        perror("\n\nОшибка: не уставновлен считающий семафор - БуферПолон\n\n");
         return -7;
     }
 
@@ -77,7 +77,7 @@ int main(void)
     {
         if ((child_pid = fork()) == -1)
         {
-            perror("\n\nОшибка: не удалось прородить процесс производитель\n\n");
+            perror("\n\nОшибка: не удалось породить процесс производитель\n\n");
             return -8;
         }
         else if (child_pid == 0)
@@ -92,7 +92,7 @@ int main(void)
     {
         if ((child_pid = fork()) == -1)
         {
-            perror("\n\nОшибка: не удалось прородить процесс потребитель\n\n");
+            perror("\n\nОшибка: не удалось породить процесс потребитель\n\n");
             return -9;
         }
         else if (child_pid == 0)
