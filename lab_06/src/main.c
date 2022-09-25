@@ -8,7 +8,7 @@
 #define READERS_NUM 5
 #define WRITERS_NUM 3
 
-#define ITERS 8
+#define ITERS 18
 
 HANDLE can_read;
 HANDLE can_write;
@@ -39,12 +39,13 @@ void start_read()
         WaitForSingleObject(can_read, INFINITE);
     }
 
-    WaitForSingleObject(mutex, INFINITE);
+    WaitForSingleObject(mutex, INFINITE); // при дикременте ждущих читателей, может начать работать писатель (потому что не произошел инкремент счетчика активных читателей)
 
     InterlockedDecrement(&readers_wait_cnt);
-    InterlockedIncrement(&readers_active_cnt);
 
     SetEvent(can_read);
+    InterlockedIncrement(&readers_active_cnt);
+
     ReleaseMutex(mutex);
 }
 
@@ -82,7 +83,7 @@ void start_write()
 {
     InterlockedIncrement(&writers_wait_cnt);
 
-    if (is_writer_active || readers_active_cnt > 0)
+    if (is_writer_active || WaitForSingleObject(can_read, 0) == WAIT_OBJECT_0)
     {
         WaitForSingleObject(can_write, INFINITE);
     }
